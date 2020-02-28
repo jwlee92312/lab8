@@ -287,8 +287,8 @@ to allow the creation of generic interval modules*.
 ......................................................................*)
 
 (* ... place your implementation of the MakeBestInterval functor here ... *)
-module MakeBestInterval (Endpoint : ORDERED_TYPE) : 
-                        (INTERVAL with type endpoint = Endpoint.t) =
+module MakeBestInterval (Endpoint : ORDERED_TYPE) 
+                        : (INTERVAL with type endpoint = Endpoint.t) =
   struct
 
     type endpoint = Endpoint.t
