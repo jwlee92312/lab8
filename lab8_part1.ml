@@ -182,47 +182,21 @@ INTERVAL signature. (Much of the implementation can be copied from
 MakeInterval above.) **Don't forget to specify the module type.**
 ......................................................................*)
 
-module MakeSafeInterval (Endpoint : ORDERED_TYPE) : INTERVAL =
-  struct
-
-    type endpoint = Endpoint.t
-
-    type interval =
-      | Interval of Endpoint.t * Endpoint.t
-      | Empty
-
-    let create (low : Endpoint.t) (high : Endpoint.t) : interval =
-        if Endpoint.compare low high <= 0 then
-          Interval (low, high)
-        else Empty ;;
-
-    let is_empty (intvl : interval) : bool =
-      match intvl with
-      | Interval (l, h) -> if Endpoint.compare l h = 0 then true
-                           else false
-      | Empty -> true ;;
-
-    let contains (intvl : interval) (x : Endpoint.t) : bool =
-      match intvl with
-      | Empty -> false
-      | Interval (l, h) -> if Endpoint.compare l x <= 0 && Endpoint.compare h x >= 0
-                           then true
-                           else false ;;
-
-    let intersect (intvl1 : interval) (intvl2 : interval) : interval =
-      match intvl1, intvl2 with
-      | Empty, Empty
-      | Empty, _
-      | _, Empty -> Empty
-      | Interval (l1, h1), Interval (l2, h2) ->
-          if Endpoint.compare l2 h1 > 0 || Endpoint.compare l1 h2 > 0 then Empty
-          else if Endpoint.compare l1 l2 >= 0 && Endpoint.compare h1 h2 <= 0
-          then Interval (l1, h1)
-          else if Endpoint.compare l1 l2 < 0 && Endpoint.compare h1 h2 > 0
-          then Interval (l2, h2)
-          else if Endpoint.compare l1 l2 >= 0 && Endpoint.compare h1 h2 > 0
-          then Interval (l1, h2)
-          else Interval (l2, h1)
+module MakeInterval (Endpoint : ORDERED_TYPE) =   
+struct    
+type interval =      
+| Interval of Endpoint.t * Endpoint.t      
+| Empty    (* create low high -- Returns a new interval covering `low` to       `high` inclusive. If `low` is greater than `high`, then the       interval is empty. *)    let create (low : Endpoint.t) (high : Endpoint.t) : interval =      if Endpoint.compare low high > 0 then Empty      else Interval (low, high)    (* is_empty intvl -- Returns true if and only if `intvl` is       empty *)    let is_empty (intvl : interval) : bool =      match intvl with      | Empty -> true      | Interval _ -> false    (* contains intvl x -- Returns true if and only if the value `x`       is contained within `intvl` *)    let contains (intvl : interval) (x : Endpoint.t) : bool =      match intvl with      | Empty -> false      | Interval (low, high) ->
+Endpoint.compare x low >= 0 && Endpoint.compare x high <= 0    
+(* intersect intvl1 intvl2 -- Returns the intersection of `intvl1`       and `intvl2` *)    
+let intersect (intvl1 : interval) (intvl2 : interval) : interval = 
+  let ordered x y = if Endpoint.compare x y <= 0 then x, y else y, x in     
+   match intvl1, intvl2 with      
+   | Empty, _      
+   | _, Empty -> Empty      
+   | Interval (low1, high1), Interval (low2, high2) ->         
+   let (_, low), (high, _)  = ordered low1 low2, ordered high1 high2 in
+    create low high    
   end ;;
 
 (* We have successfully made our returned module abstract, but believe
